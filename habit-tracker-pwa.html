@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0d0d1a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mes Habitudes" />
+  <title>Mes Habitudes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #0d0d1a;
+      --card: #13132e;
+      --border: #1e1e45;
+      --muted: #4b4b8a;
+      --text: #e2e2f0;
+      --accent: #818cf8;
+      --purple: #7c3aed;
+      --orange: #f97316;
+      --violet: #a78bfa;
+      --green: #34d399;
+      --blue: #60a5fa;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      overscroll-behavior: none;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(180deg, #16163a 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 20px 20px;
+      text-align: center;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-label { font-size: 11px; letter-spacing: 4px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+    .header-title { font-size: 26px; font-weight: 800; background: linear-gradient(90deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header-date { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    /* TABS */
+    .tabs { display: flex; margin: 16px 16px 0; background: var(--card); border-radius: 14px; padding: 4px; }
+    .tab {
+      flex: 1; padding: 11px 0; border: none; border-radius: 11px; cursor: pointer;
+      font-family: inherit; font-size: 13px; font-weight: 600; transition: all 0.2s;
+      background: transparent; color: var(--muted);
+    }
+    .tab.active {
+      background: linear-gradient(135deg, #4338ca, var(--purple));
+      color: #fff; box-shadow: 0 4px 15px #4338ca44;
+    }
+
+    /* SCREENS */
+    .screen { display: none; padding: 0 16px 32px; }
+    .screen.active { display: block; }
+
+    /* WEEK NAV */
+    .week-nav { display: flex; align-items: center; justify-content: space-between; margin: 18px 0 14px; }
+    .week-nav button {
+      width: 36px; height: 36px; border: 1px solid var(--border); background: var(--card);
+      border-radius: 10px; color: var(--accent); font-size: 20px; cursor: pointer; font-family: inherit;
+    }
+    .week-nav button:disabled { opacity: 0.3; cursor: default; }
+    .week-label { color: var(--accent); font-weight: 600; font-size: 14px; }
+
+    /* HABIT CARD */
+    .habit-card { background: var(--card); border-radius: 18px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
+    .habit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .habit-info { display: flex; align-items: center; gap: 10px; }
+    .habit-emoji { font-size: 22px; }
+    .habit-name { font-weight: 700; font-size: 15px; }
+    .habit-sub { color: var(--muted); font-size: 11px; margin-top: 2px; }
+    .habit-count { font-weight: 800; font-size: 22px; }
+    .habit-total { color: var(--muted); font-size: 11px; text-align: right; margin-top: 1px; }
+    .progress-bar { height: 4px; background: var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 10px; transition: width 0.4s ease; }
+    .days-row { display: flex; gap: 5px; }
+    .day-btn {
+      flex: 1; padding: 8px 0; border: none; border-radius: 9px; cursor: pointer;
+      font-family: inherit; font-size: 10px; font-weight: 600; transition: all 0.15s;
+      background: var(--border); color: var(--muted);
+    }
+    .day-btn.checked { color: #fff; transform: scale(1.04); }
+    .day-btn.today-highlight { outline: 2px solid rgba(255,255,255,0.3); }
+
+    /* SECTION TITLE */
+    .section-title { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+    .section-sub { color: var(--muted); font-size: 12px; margin-bottom: 16px; }
+
+    /* CHART CARD */
+    .chart-card { background: var(--card); border-radius: 18px; padding: 18px; border: 1px solid var(--border); margin-top: 6px; }
+    .chart-wrap { position: relative; height: 180px; }
+
+    /* SLEEP */
+    .sleep-input-card { background: var(--card); border-radius: 18px; padding: 18px; margin: 18px 0 12px; border: 1px solid var(--border); }
+    .sleep-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .sleep-input {
+      flex: 1; padding: 13px 16px; background: var(--border); border: 1px solid #2d2d5e;
+      border-radius: 12px; color: var(--text); font-size: 22px; font-weight: 700;
+      font-family: inherit; outline: none; border: none;
+    }
+    .sleep-input::placeholder { color: var(--muted); }
+    .sleep-btn {
+      padding: 13px 18px; background: linear-gradient(135deg, #4338ca, var(--purple));
+      border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: inherit; box-shadow: 0 4px 15px #4338ca44;
+    }
+    .quick-picks { display: flex; gap: 7px; flex-wrap: wrap; }
+    .quick-pick {
+      padding: 7px 13px; background: var(--border); border: 1px solid #2d2d5e;
+      border-radius: 20px; color: var(--accent); font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all 0.15s; border: none;
+    }
+    .quick-pick.active { background: #4338ca; color: #fff; }
+
+    /* STATS ROW */
+    .stats-row { display: flex; gap: 10px; margin-bottom: 12px; }
+    .stat-card { flex: 1; background: var(--card); border-radius: 14px; padding: 14px 10px; border: 1px solid var(--border); text-align: center; }
+    .stat-val { font-weight: 800; font-size: 20px; }
+    .stat-lbl { color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+    /* LEGEND */
+    .legend { display: flex; gap: 16px; justify-content: center; margin-top: 14px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-line { width: 22px; height: 2px; border-radius: 2px; }
+    .legend-label { color: var(--muted); font-size: 11px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-label">Routine Tracker</div>
+  <div class="header-title">Mes Habitudes</div>
+  <div class="header-date" id="headerDate"></div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('habits')">🏆 Habitudes</button>
+  <button class="tab" onclick="switchTab('sleep')">🌙 Sommeil</button>
+</div>
+
+<!-- HABITS SCREEN -->
+<div class="screen active" id="screen-habits">
+  <div class="week-nav">
+    <button onclick="changeWeek(-1)">‹</button>
+    <span class="week-label" id="weekLabel">Cette semaine</span>
+    <button id="nextWeekBtn" onclick="changeWeek(1)" disabled>›</button>
+  </div>
+
+  <div id="habitsContainer"></div>
+
+  <div class="chart-card" style="margin-top:8px">
+    <div class="section-title">📊 Résumé de la semaine</div>
+    <div class="section-sub">Séances réalisées vs objectif</div>
+    <div class="chart-wrap"><canvas id="habitChart"></canvas></div>
+  </div>
+</div>
+
+<!-- SLEEP SCREEN -->
+<div class="screen" id="screen-sleep">
+  <div class="sleep-input-card">
+    <div class="section-title">🌙 Saisir mon sommeil</div>
+    <div class="section-sub" style="margin-bottom:14px">Combien d'heures as-tu dormi cette nuit ?</div>
+    <div class="sleep-row">
+      <input class="sleep-input" type="number" id="sleepInput" min="0" max="24" step="0.5" placeholder="ex: 7.5" />
+      <button class="sleep-btn" onclick="validateSleep()">Valider</button>
+    </div>
+    <div class="quick-picks" id="quickPicks"></div>
+  </div>
+
+  <div class="stats-row" id="sleepStats"></div>
+
+  <div class="chart-card">
+    <div class="section-title">📈 Historique — 14 jours</div>
+    <div class="section-sub">Heures de sommeil par nuit</div>
+    <div class="chart-wrap"><canvas id="sleepChart"></canvas></div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-line" style="background:#34d39966"></div><span class="legend-label">Min recommandé (7h)</span></div>
+      <div class="legend-item"><div class="legend-line" style="background:#818cf866"></div><span class="legend-label">Optimal (8h)</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const HABITS = [
+  { id: "muscu",      label: "Muscu",      emoji: "🏋️", target: 4, unit: "fois/sem", color: "#f97316" },
+  { id: "meditation", label: "Méditation", emoji: "🧘", target: 7, unit: "fois/sem", color: "#a78bfa" },
+  { id: "cardio",     label: "Cardio",     emoji: "🏃", target: 1, unit: "fois/sem", color: "#34d399" },
+  { id: "lecture",    label: "Lecture",    emoji: "📚", target: 5, unit: "fois/sem", color: "#60a5fa" },
+];
+const DAYS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+const QUICK_HOURS = [5, 6, 6.5, 7, 7.5, 8, 8.5, 9];
+
+let weekOffset = 0;
+let habitChartInstance = null;
+let sleepChartInstance = null;
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem("habitData_v2") || "{}"); }
+  catch { return {}; }
+}
+function saveData(d) { localStorage.setItem("habitData_v2", JSON.stringify(d)); }
+
+function getWeekKey(offset) {
+  const now = new Date();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7) + offset * 7);
+  return monday.toISOString().slice(0, 10);
+}
+function getTodayIndex() { return (new Date().getDay() + 6) % 7; }
+function getTodayKey() { return new Date().toISOString().slice(0, 10); }
+function getLast14Days() {
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  return days;
+}
+
+// --- HEADER DATE ---
+document.getElementById("headerDate").textContent = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+
+// --- TABS ---
+function switchTab(tab) {
+  document.querySelectorAll(".tab").forEach((t, i) => t.classList.toggle("active", (i === 0 && tab === "habits") || (i === 1 && tab === "sleep")));
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-" + tab).classList.add("active");
+  if (tab === "habits") renderHabits();
+  if (tab === "sleep") renderSleep();
+}
+
+// --- WEEK NAV ---
+function changeWeek(dir) {
+  weekOffset = Math.min(0, weekOffset + dir);
+  document.getElementById("nextWeekBtn").disabled = weekOffset === 0;
+  const labels = { 0: "Cette semaine", "-1": "Semaine dernière" };
+  document.getElementById("weekLabel").textContent = labels[weekOffset] || `Il y a ${-weekOffset} semaines`;
+  renderHabits();
+}
+
+// --- RENDER HABITS ---
+function renderHabits() {
+  const data = loadData();
+  const weekKey = getWeekKey(weekOffset);
+  const weekData = data[weekKey] || {};
+  const todayIdx = getTodayIndex();
+  const container = document.getElementById("habitsContainer");
+  container.innerHTML = "";
+
+  HABITS.forEach(habit => {
+    const done = (weekData[habit.id] || []).length;
+    const pct = Math.min(100, Math.round((done / habit.target) * 100));
+    const countColor = done >= habit.target ? "#34d399" : habit.color;
+
+    const card = document.createElement("div");
+    card.className = "habit-card";
+    card.innerHTML = `
+      <div class="habit-header">
+        <div class="habit-info">
+          <span class="habit-emoji">${habit.emoji}</span>
+          <div>
+            <div class="habit-name">${habit.label}</div>
+            <div class="habit-sub">Objectif : ${habit.target} ${habit.unit}</div>
+          </div>
+        </div>
+        <div>
+          <div class="habit-count" style="color:${countColor}">${done}</div>
+          <div class="habit-total">/ ${habit.target}</div>
+        </div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${pct}%; background:${done >= habit.target ? '#34d399' : `linear-gradient(90deg,${habit.color}88,${habit.color})`}"></div>
+      </div>
+      <div class="days-row" id="days-${habit.id}"></div>
+    `;
+    container.appendChild(card);
+
+    const daysRow = card.querySelector(`#days-${habit.id}`);
+    DAYS.forEach((day, i) => {
+      const checked = (weekData[habit.id] || []).includes(i);
+      const isToday = weekOffset === 0 && i === todayIdx;
+      const btn = document.createElement("button");
+      btn.className = "day-btn" + (checked ? " checked" : "") + (isToday ? " today-highlight" : "");
+      btn.textContent = day;
+      btn.style.background = checked ? habit.color : "";
+      btn.style.color = checked ? "#fff" : isToday ? habit.color : "";
+      if (isToday) btn.style.outline = `2px solid ${habit.color}55`;
+      btn.onclick = () => toggleHabit(habit.id, i);
+      daysRow.appendChild(btn);
+    });
+  });
+
+  renderHabitChart(weekData);
+}
+
+function toggleHabit(habitId, dayIndex) {
+  const data = loadData();
+  const weekKey = getWeekKey(weekOffset);
+  const week = data[weekKey] || {};
+  const arr = week[habitId] || [];
+  week[habitId] = arr.includes(dayIndex) ? arr.filter(d => d !== dayIndex) : [...arr, dayIndex];
+  data[weekKey] = week;
+  saveData(data);
+  renderHabits();
+}
+
+// --- HABIT CHART ---
+function renderHabitChart(weekData) {
+  const labels = HABITS.map(h => h.label);
+  const done = HABITS.map(h => (weekData[h.id] || []).length);
+  const targets = HABITS.map(h => h.target);
+  const colors = HABITS.map(h => h.color);
+
+  if (habitChartInstance) habitChartInstance.destroy();
+  const ctx = document.getElementById("habitChart").getContext("2d");
+  habitChartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "Réalisé", data: done, backgroundColor: colors, borderRadius: 8, maxBarThickness: 40 },
+        { label: "Objectif", data: targets, backgroundColor: "#1e1e45", borderRadius: 8, maxBarThickness: 40 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: "#1a1a2e", titleColor: "#a0a0c0", bodyColor: "#e2e2f0",
+        borderColor: "#2d2d5e", borderWidth: 1,
+        callbacks: {
+          label: (ctx) => ctx.datasetIndex === 0
+            ? ` Réalisé : ${ctx.raw} / ${targets[ctx.dataIndex]}`
+            : ` Objectif : ${ctx.raw}`
+        }
+      }},
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4b4b8a", font: { family: "Outfit", size: 11 } }, border: { display: false } },
+        y: { grid: { color: "#1e1e45" }, ticks: { color: "#4b4b8a", font: { family: "Outfit", size: 11 } }, border: { display: false } }
+      }
+    }
+  });
+}
+
+// --- SLEEP ---
+function renderSleep() {
+  const data = loadData();
+  const sleepData = data.sleep || {};
+  const todayKey = getTodayKey();
+  const todayVal = sleepData[todayKey];
+
+  // Quick picks
+  const qp = document.getElementById("quickPicks");
+  qp.innerHTML = "";
+  QUICK_HOURS.forEach(h => {
+    const btn = document.createElement("button");
+    btn.className = "quick-pick" + (todayVal === h ? " active" : "");
+    btn.textContent = h + "h";
+    btn.onclick = () => { setSleep(todayKey, h); renderSleep(); };
+    qp.appendChild(btn);
+  });
+
+  // Sleep input prefill
+  const inp = document.getElementById("sleepInput");
+  if (todayVal) inp.value = todayVal;
+
+  // Stats
+  const vals = Object.values(sleepData).filter(v => v > 0);
+  const avg = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : null;
+  const stats = [
+    { label: "Moyenne", val: avg ? avg+"h" : "—", color: "#818cf8" },
+    { label: "Cette nuit", val: todayVal ? todayVal+"h" : "—", color: todayVal >= 7 ? "#34d399" : todayVal ? "#f97316" : "#4b4b8a" },
+    { label: "Objectif", val: "7–8h", color: "#60a5fa" },
+  ];
+  document.getElementById("sleepStats").innerHTML = stats.map(s => `
+    <div class="stat-card">
+      <div class="stat-val" style="color:${s.color}">${s.val}</div>
+      <div class="stat-lbl">${s.label}</div>
+    </div>
+  `).join("");
+
+  renderSleepChart(sleepData);
+}
+
+function validateSleep() {
+  const h = parseFloat(document.getElementById("sleepInput").value);
+  if (isNaN(h) || h < 0 || h > 24) return;
+  setSleep(getTodayKey(), h);
+  renderSleep();
+}
+
+function setSleep(date, hours) {
+  const data = loadData();
+  data.sleep = data.sleep || {};
+  data.sleep[date] = hours;
+  saveData(data);
+}
+
+// --- SLEEP CHART ---
+function renderSleepChart(sleepData) {
+  const last14 = getLast14Days();
+  const labels = last14.map(d => d.slice(5).replace("-", "/"));
+  const values = last14.map(d => sleepData[d] ?? null);
+
+  if (sleepChartInstance) sleepChartInstance.destroy();
+  const ctx = document.getElementById("sleepChart").getContext("2d");
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, 180);
+  gradient.addColorStop(0, "#818cf833");
+  gradient.addColorStop(1, "#818cf800");
+
+  sleepChartInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: "#818cf8",
+        borderWidth: 2.5,
+        backgroundColor: gradient,
+        pointBackgroundColor: "#818cf8",
+        pointRadius: 4,
+        pointHoverRadius: 7,
+        pointHoverBackgroundColor: "#c084fc",
+        tension: 0.3,
+        fill: true,
+        spanGaps: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#1a1a2e", titleColor: "#a0a0c0", bodyColor: "#818cf8",
+          borderColor: "#2d2d5e", borderWidth: 1,
+          callbacks: {
+            label: (ctx) => {
+              const h = ctx.raw;
+              if (h === null) return " Pas de données";
+              const q = h >= 8 ? "Excellent 🌟" : h >= 7 ? "Bon 👍" : h >= 6 ? "Correct 😐" : "Insuffisant 😴";
+              return [` ${h}h de sommeil`, ` ${q}`];
+            }
+          }
+        },
+        annotation: {}
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: "#4b4b8a", font: { family: "Outfit", size: 9 }, maxRotation: 45 },
+          border: { display: false }
+        },
+        y: {
+          min: 0, max: 12,
+          grid: { color: "#1e1e45" },
+          ticks: { color: "#4b4b8a", font: { family: "Outfit", size: 11 }, callback: v => v+"h" },
+          border: { display: false }
+        }
+      }
+    },
+    plugins: [{
+      id: "refLines",
+      afterDraw(chart) {
+        const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+        [{ val: 7, color: "#34d39955" }, { val: 8, color: "#818cf855" }].forEach(ref => {
+          const yPos = y.getPixelForValue(ref.val);
+          ctx.save();
+          ctx.setLineDash([5, 5]);
+          ctx.strokeStyle = ref.color;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(left, yPos);
+          ctx.lineTo(right, yPos);
+          ctx.stroke();
+          ctx.restore();
+        });
+      }
+    }]
+  });
+}
+
+// --- INIT ---
+renderHabits();
+</script>
+</body>
+</html>
